@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>తెలుగు పంచాంగం - Telugu Calendar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #764ba2;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .date-picker {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .date-picker label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .date-picker input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .date-picker input:focus {
+            border-color: #764ba2;
+        }
+
+        .calendar-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .current-date {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .current-date h2 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .current-date p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .panchang-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .panchang-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .panchang-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            cursor: pointer;
+        }
+
+        .panchang-item .info-icon {
+            float: right;
+            color: #667eea;
+            font-size: 1.2em;
+            opacity: 0.7;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideUp 0.3s;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #764ba2;
+            margin-bottom: 5px;
+        }
+
+        .modal-header .telugu-title {
+            color: #667eea;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2em;
+            color: #999;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .modal-section p {
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .modal-section ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .modal-section li {
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .significance-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .panchang-item .label {
+            font-size: 0.85em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .panchang-item .value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .panchang-item .telugu {
+            font-size: 1.1em;
+            color: #764ba2;
+            margin-top: 3px;
+        }
+
+        .panchang-item .timing {
+            font-size: 0.9em;
+            color: #ff6b6b;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .panchang-item .timing-range {
+            font-size: 0.85em;
+            color: #28a745;
+            margin-top: 3px;
+        }
+
+        .next-element {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 2px dashed #e0e0e0;
+        }
+
+        .next-element .next-label {
+            font-size: 0.8em;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .next-element .next-value {
+            font-size: 1em;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .next-element .next-telugu {
+            font-size: 0.95em;
+            color: #9b59b6;
+            margin-top: 2px;
+        }
+
+        .next-element .next-timing {
+            font-size: 0.85em;
+            color: #3498db;
+            margin-top: 3px;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: white;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .current-date h2 {
+                font-size: 1.2em;
+            }
+
+            .panchang-item {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🕉️ తెలుగు పంచాంగం</h1>
+            <p>Telugu Calendar</p>
+        </div>
+
+        <div class="date-picker">
+            <label for="dateInput">Select Date / తేదీ ఎంచుకోండి:</label>
+            <input type="date" id="dateInput" />
+        </div>
+
+        <div class="calendar-card">
+            <div class="current-date">
+                <h2 id="englishDate">Loading...</h2>
+                <p id="teluguDate">తేదీ లోడ్ అవుతోంది...</p>
+            </div>
+
+            <div class="panchang-grid" id="panchangData">
+                <div class="loading">Calculating panchang details...</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🙏 శుభం భవతు | May there be auspiciousness</p>
+        </div>
+    </div>
+
+    <!-- Modal for detailed information -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <h2 id="modalTitle">Title</h2>
+                <div class="telugu-title" id="modalTeluguTitle">తెలుగు</div>
+            </div>
+            <div id="modalBody">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Telugu month names
+        const teluguMonths = [
+            'చైత్రం', 'వైశాఖం', 'జ్యేష్ఠం', 'ఆషాఢం', 
+            'శ్రావణం', 'భాద్రపదం', 'ఆశ్వయుజం', 'కార్తీకం',
+            'మార్గశిరం', 'పుష్యం', 'మాఘం', 'ఫాల్గుణం'
+        ];
+
+        // English month names
+        const englishMonths = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        // Thithi names
+        const thidhiNames = [
+            { telugu: 'పాడ్యమి', english: 'Padyami (1st)' },
+            { telugu: 'విదియ', english: 'Vidiya (2nd)' },
+            { telugu: 'తదియ', english: 'Tadiya (3rd)' },
+            { telugu: 'చవితి', english: 'Chaviti (4th)' },
+            { telugu: 'పంచమి', english: 'Panchami (5th)' },
+            { telugu: 'షష్ఠి', english: 'Shashthi (6th)' },
+            { telugu: 'సప్తమి', english: 'Saptami (7th)' },
+            { telugu: 'అష్టమి', english: 'Ashtami (8th)' },
+            { telugu: 'నవమి', english: 'Navami (9th)' },
+            { telugu: 'దశమి', english: 'Dasami (10th)' },
+            { telugu: 'ఏకాదశి', english: 'Ekadashi (11th)' },
+            { telugu: 'ద్వాదశి', english: 'Dwadashi (12th)' },
+            { telugu: 'త్రయోదశి', english: 'Trayodashi (13th)' },
+            { telugu: 'చతుర్దశి', english: 'Chaturdashi (14th)' },
+            { telugu: 'పౌర్ణమి', english: 'Pournami (Full Moon)' },
+            { telugu: 'అమావాస్య', english: 'Amavasya (New Moon)' }
+        ];
+
+        // Nakshatra names
+        const nakshatraNames = [
+            { telugu: 'అశ్విని', english: 'Ashwini' },
+            { telugu: 'భరణి', english: 'Bharani' },
+            { telugu: 'కృత్తిక', english: 'Krittika' },
+            { telugu: 'రోహిణి', english: 'Rohini' },
+            { telugu: 'మృగశిర', english: 'Mrigashira' },
+            { telugu: 'ఆర్ద్ర', english: 'Ardra' },
+            { telugu: 'పునర్వసు', english: 'Punarvasu' },
+            { telugu: 'పుష్యమి', english: 'Pushya' },
+            { telugu: 'ఆశ్లేష', english: 'Ashlesha' },
+            { telugu: 'మఖ', english: 'Magha' },
+            { telugu: 'పుబ్బ', english: 'Purva Phalguni' },
+            { telugu: 'ఉత్తర', english: 'Uttara Phalguni' },
+            { telugu: 'హస్త', english: 'Hasta' },
+            { telugu: 'చిత్త', english: 'Chitra' },
+            { telugu: 'స్వాతి', english: 'Swati' },
+            { telugu: 'విశాఖ', english: 'Vishakha' },
+            { telugu: 'అనూరాధ', english: 'Anuradha' },
+            { telugu: 'జ్యేష్ఠ', english: 'Jyeshtha' },
+            { telugu: 'మూల', english: 'Moola' },
+            { telugu: 'పూర్వాషాఢ', english: 'Purva Ashadha' },
+            { telugu: 'ఉత్తరాషాఢ', english: 'Uttara Ashadha' },
+            { telugu: 'శ్రవణం', english: 'Shravana' },
+            { telugu: 'ధనిష్ఠ', english: 'Dhanishta' },
+            { telugu: 'శతభిషం', english: 'Shatabhisha' },
+            { telugu: 'పూర్వాభాద్ర', english: 'Purva Bhadrapada' },
+            { telugu: 'ఉత్తరాభాద్ర', english: 'Uttara Bhadrapada' },
+            { telugu: 'రేవతి', english: 'Revati' }
+        ];
+
+        // Yogam names
+        const yogamNames = [
+            { telugu: 'విష్కంభ', english: 'Vishkambha' },
+            { telugu: 'ప్రీతి', english: 'Preeti' },
+            { telugu: 'ఆయుష్మాన్', english: 'Ayushman' },
+            { telugu: 'సౌభాగ్య', english: 'Saubhagya' },
+            { telugu: 'శోభన', english: 'Shobhana' },
+            { telugu: 'అతిగండ', english: 'Atiganda' },
+            { telugu: 'సుకర్మ', english: 'Sukarma' },
+            { telugu: 'ధృతి', english: 'Dhriti' },
+            { telugu: 'శూల', english: 'Shoola' },
+            { telugu: 'గండ', english: 'Ganda' },
+            { telugu: 'వృద్ధి', english: 'Vriddhi' },
+            { telugu: 'ధ్రువ', english: 'Dhruva' },
+            { telugu: 'వ్యాఘాత', english: 'Vyaghata' },
+            { telugu: 'హర్షణ', english: 'Harshana' },
+            { telugu: 'వజ్ర', english: 'Vajra' },
+            { telugu: 'సిద్ధి', english: 'Siddhi' },
+            { telugu: 'వ్యతీపాత', english: 'Vyatipata' },
+            { telugu: 'వరీయాన్', english: 'Variyan' },
+            { telugu: 'పరిఘ', english: 'Parigha' },
+            { telugu: 'శివ', english: 'Shiva' },
+            { telugu: 'సిద్ధ', english: 'Siddha' },
+            { telugu: 'సాధ్య', english: 'Sadhya' },
+            { telugu: 'శుభ', english: 'Shubha' },
+            { telugu: 'శుక్ల', english: 'Shukla' },
+            { telugu: 'బ్రహ్మ', english: 'Brahma' },
+            { telugu: 'ఐంద్ర', english: 'Aindra' },
+            { telugu: 'వైధృతి', english: 'Vaidhriti' }
+        ];
+
+        // Karanam names
+        const karanamNames = [
+            { telugu: 'బవ', english: 'Bava' },
+            { telugu: 'బాలవ', english: 'Balava' },
+            { telugu: 'కౌలవ', english: 'Kaulava' },
+            { telugu: 'తైతిల', english: 'Taitila' },
+            { telugu: 'గరజ', english: 'Garaja' },
+            { telugu: 'వణిజ', english: 'Vanija' },
+            { telugu: 'విష్టి', english: 'Vishti' },
+            { telugu: 'బవ', english: 'Bava' },
+            { telugu: 'బాలవ', english: 'Balava' },
+            { telugu: 'కౌలవ', english: 'Kaulava' },
+            { telugu: 'తైతిల', english: 'Taitila' }
+        ];
+
+        // Rashi names
+        const rashiNames = [
+            { telugu: 'మేషం', english: 'Mesha (Aries)' },
+            { telugu: 'వృషభం', english: 'Vrishabha (Taurus)' },
+            { telugu: 'మిథునం', english: 'Mithuna (Gemini)' },
+            { telugu: 'కర్కాటకం', english: 'Karkataka (Cancer)' },
+            { telugu: 'సింహం', english: 'Simha (Leo)' },
+            { telugu: 'కన్య', english: 'Kanya (Virgo)' },
+            { telugu: 'తుల', english: 'Tula (Libra)' },
+            { telugu: 'వృశ్చికం', english: 'Vrishchika (Scorpio)' },
+            { telugu: 'ధనుస్సు', english: 'Dhanus (Sagittarius)' },
+            { telugu: 'మకరం', english: 'Makara (Capricorn)' },
+            { telugu: 'కుంభం', english: 'Kumbha (Aquarius)' },
+            { telugu: 'మీనం', english: 'Meena (Pisces)' }
+        ];
+
+        // Weekday names
+        const weekdaysTelugu = [
+            'ఆదివారం', 'సోమవారం', 'మంగళవారం', 'బుధవారం',
+            'గురువారం', 'శుక్రవారం', 'శనివారం'
+        ];
+
+        const weekdaysEnglish = [
+            'Sunday', 'Monday', 'Tuesday', 'Wednesday',
+            'Thursday', 'Friday', 'Saturday'
+        ];
+
+        // Detailed information for Thithis
+        const thithiInfo = {
+            0: { // Padyami
+                meaning: "First day after new moon or full moon. Symbolizes new beginnings and fresh starts.",
+                significance: ["Auspicious for starting new ventures", "Good for laying foundations", "Favorable for beginning education"],
+                deity: "Agni (Fire God)",
+                activities: "Starting new projects, beginning studies, planting crops",
+                historical: "Lord Rama's coronation is believed to have occurred on Shukla Padyami of Chaitra month."
+            },
+            1: { // Vidiya
+                meaning: "Second lunar day representing growth and development.",
+                significance: ["Good for financial planning", "Favorable for building relationships", "Suitable for yoga and meditation"],
+                deity: "Brahma (Creator)",
+                activities: "Financial transactions, relationship building, spiritual practices",
+                historical: "Considered auspicious for marriages in many Telugu communities."
+            },
+            2: { // Tadiya
+                meaning: "Third lunar day signifying strength and courage.",
+                significance: ["Ideal for overcoming obstacles", "Good for physical activities", "Favorable for competitive events"],
+                deity: "Gauri (Goddess Parvati)",
+                activities: "Sports competitions, interviews, challenging tasks",
+                historical: "Traditionally observed as Gangaur festival in some regions."
+            },
+            3: { // Chaviti
+                meaning: "Fourth lunar day representing wisdom and knowledge.",
+                significance: ["Auspicious for worshipping Lord Ganesha", "Good for learning new skills", "Favorable for solving problems"],
+                deity: "Ganesha (Remover of Obstacles)",
+                activities: "Starting education, problem-solving, creative work",
+                historical: "Vinayaka Chaviti (Ganesh Chaturthi) is one of the most important festivals celebrated on this Thithi."
+            },
+            4: { // Panchami
+                meaning: "Fifth lunar day associated with knowledge and arts.",
+                significance: ["Sacred to Goddess Saraswati", "Excellent for education", "Good for artistic pursuits"],
+                deity: "Saraswati (Goddess of Learning)",
+                activities: "Starting music/art classes, writing, academic activities",
+                historical: "Vasant Panchami and Sri Panchami are major festivals. Students worship Goddess Saraswati on this day."
+            },
+            5: { // Shashthi
+                meaning: "Sixth lunar day representing devotion and discipline.",
+                significance: ["Good for fasting and spiritual practices", "Favorable for worship", "Ideal for disciplined activities"],
+                deity: "Kartikeya (God of War)",
+                activities: "Religious observances, martial arts, disciplined training",
+                historical: "Skanda Shashthi is celebrated in honor of Lord Kartikeya's victory over demons."
+            },
+            6: { // Saptami
+                meaning: "Seventh lunar day symbolizing spiritual energy and purification.",
+                significance: ["Sacred to Sun God", "Good for health and vitality", "Favorable for charitable acts"],
+                deity: "Surya (Sun God)",
+                activities: "Health remedies, charity, sun worship",
+                historical: "Ratha Saptami celebrates the Sun God's chariot journey, marking the change of season."
+            },
+            7: { // Ashtami
+                meaning: "Eighth lunar day representing power and transformation.",
+                significance: ["Sacred to Goddess Durga", "Good for overcoming enemies", "Favorable for spiritual advancement"],
+                deity: "Durga (Warrior Goddess)",
+                activities: "Durga worship, protection rituals, spiritual practices",
+                historical: "Krishna Janmashtami, celebrating Lord Krishna's birth, falls on this Thithi."
+            },
+            8: { // Navami
+                meaning: "Ninth lunar day signifying completion and fulfillment.",
+                significance: ["Auspicious for Durga worship", "Good for completing projects", "Favorable for success"],
+                deity: "Durga (in her nine forms)",
+                activities: "Completing tasks, celebrating achievements, worship",
+                historical: "Rama Navami celebrates Lord Rama's birth. Navratri culminates with this Thithi."
+            },
+            9: { // Dasami
+                meaning: "Tenth lunar day representing victory and triumph.",
+                significance: ["Celebrates victory of good over evil", "Auspicious for new ventures", "Good for celebrations"],
+                deity: "Yama (God of Death/Dharma)",
+                activities: "Celebrations, starting important work, victory ceremonies",
+                historical: "Vijayadashami/Dussehra celebrates Rama's victory over Ravana."
+            },
+            10: { // Ekadashi
+                meaning: "Eleventh lunar day, most auspicious for fasting and spiritual practices.",
+                significance: ["Most sacred for Lord Vishnu worship", "Ideal for fasting", "Highly spiritual day"],
+                deity: "Vishnu (Preserver)",
+                activities: "Fasting, meditation, reading scriptures, charity",
+                historical: "Over 24 Ekadashis are celebrated annually. Vaikuntha Ekadashi is extremely important."
+            },
+            11: { // Dwadashi
+                meaning: "Twelfth lunar day representing completion and satisfaction.",
+                significance: ["Good for completing fasts", "Favorable for fulfillment", "Auspicious for worship"],
+                deity: "Vishnu",
+                activities: "Breaking Ekadashi fast, worship, donations",
+                historical: "Marks the completion of Ekadashi vrata and is celebrated with special meals."
+            },
+            12: { // Trayodashi
+                meaning: "Thirteenth lunar day associated with removal of sins and negative energy.",
+                significance: ["Good for purification rituals", "Favorable for Shiva worship", "Ideal for removing obstacles"],
+                deity: "Kamadeva (God of Love) or Shiva",
+                activities: "Purification ceremonies, worship, meditation",
+                historical: "Pradosh Vrat is observed on this day for Lord Shiva."
+            },
+            13: { // Chaturdashi
+                meaning: "Fourteenth lunar day representing intensity and power.",
+                significance: ["Sacred to Lord Shiva", "Good for tantric practices", "Favorable for power rituals"],
+                deity: "Shiva (Destroyer/Transformer)",
+                activities: "Shiva worship, meditation, spiritual practices",
+                historical: "Maha Shivaratri is celebrated on Krishna Paksha Chaturdashi of Magha month."
+            },
+            14: { // Pournami
+                meaning: "Full moon day representing completeness and illumination.",
+                significance: ["Most auspicious for meditation", "Sacred for all deities", "Excellent for spiritual growth"],
+                deity: "All deities, especially Moon God",
+                activities: "Fasting, worship, charity, spiritual practices",
+                historical: "Buddha Pournima, Guru Pournami, and many important festivals fall on this day."
+            },
+            15: { // Amavasya
+                meaning: "New moon day representing endings and new beginnings.",
+                significance: ["Sacred for ancestor worship", "Good for introspection", "Favorable for letting go"],
+                deity: "Ancestors (Pitru)",
+                activities: "Tarpanam (offerings to ancestors), meditation, charity",
+                historical: "Mahalaya Amavasya and Diwali (in some regions) are celebrated on this Thithi."
+            }
+        };
+
+        // Detailed information for Nakshatras
+        const nakshatraInfo = {
+            0: { // Ashwini
+                meaning: "The horsemen - symbolizes swiftness, healing, and new beginnings.",
+                significance: ["Ruled by Ketu", "Favorable for travel and starting journeys", "Good for medical treatments"],
+                deity: "Ashwini Kumaras (Divine physicians)",
+                nature: "Light and swift",
+                element: "Earth",
+                characteristics: "Initiative, adventure, healing abilities",
+                historical: "Ashwini Kumaras are celestial healers mentioned in Vedas who revived the dead."
+            },
+            1: { // Bharani
+                meaning: "The bearer - represents nurturing, restraint, and transformation.",
+                significance: ["Ruled by Venus", "Associated with birth and death", "Good for creative work"],
+                deity: "Yama (Lord of Death)",
+                nature: "Fierce and transformative",
+                element: "Earth",
+                characteristics: "Discipline, responsibility, creativity",
+                historical: "Considered powerful for transformation and facing life's challenges."
+            },
+            2: { // Krittika
+                meaning: "The cutter - symbolizes sharpness, purification, and nurturing.",
+                significance: ["Ruled by Sun", "Good for removing negativity", "Favorable for leadership"],
+                deity: "Agni (Fire God)",
+                nature: "Sharp and purifying",
+                element: "Fire",
+                characteristics: "Leadership, courage, purification",
+                historical: "Lord Kartikeya was raised by the Krittika constellation, hence his name Kartikeya."
+            },
+            3: { // Rohini
+                meaning: "The red one - represents growth, fertility, and beauty.",
+                significance: ["Ruled by Moon", "Most auspicious Nakshatra", "Excellent for all activities"],
+                deity: "Brahma (Creator) and Prajapati",
+                nature: "Fixed and stable",
+                element: "Earth",
+                characteristics: "Beauty, charm, material growth",
+                historical: "Lord Krishna was born under Rohini Nakshatra. Considered the Moon's favorite wife."
+            },
+            4: { // Mrigashira
+                meaning: "Deer's head - symbolizes searching, curiosity, and gentleness.",
+                significance: ["Ruled by Mars", "Good for research and exploration", "Favorable for creative pursuits"],
+                deity: "Soma (Moon God)",
+                nature: "Gentle and seeking",
+                element: "Earth",
+                characteristics: "Intelligence, seeking knowledge, gentleness",
+                historical: "Associated with the story of Shiva pursuing Brahma in the form of a deer."
+            },
+            5: { // Ardra
+                meaning: "The moist one - represents storms, transformation, and intellect.",
+                significance: ["Ruled by Rahu", "Good for research and investigation", "Brings transformation"],
+                deity: "Rudra (Storm form of Shiva)",
+                nature: "Sharp and stormy",
+                element: "Water",
+                characteristics: "Intelligence, analytical ability, transformation",
+                historical: "Represents the destructive yet purifying aspect of Lord Shiva."
+            },
+            6: { // Punarvasu
+                meaning: "Return of the light - symbolizes renewal, abundance, and safety.",
+                significance: ["Ruled by Jupiter", "Excellent for fresh starts", "Good for returning home"],
+                deity: "Aditi (Mother of Gods)",
+                nature: "Movable and adaptable",
+                element: "Air",
+                characteristics: "Optimism, spiritual wisdom, generosity",
+                historical: "Lord Rama was born under Punarvasu. Represents return to goodness and light."
+            },
+            7: { // Pushya
+                meaning: "The nourisher - represents growth, prosperity, and spiritual energy.",
+                significance: ["Ruled by Saturn", "Most auspicious for spiritual practices", "Excellent for all activities"],
+                deity: "Brihaspati (Jupiter - Guru of Gods)",
+                nature: "Light and nourishing",
+                element: "Water",
+                characteristics: "Nourishment, prosperity, spirituality",
+                historical: "Considered one of the most beneficial Nakshatras. Guru Purnima often falls here."
+            },
+            8: { // Ashlesha
+                meaning: "The entwiner - symbolizes mysticism, kundalini, and secrets.",
+                significance: ["Ruled by Mercury", "Good for occult practices", "Associated with serpent energy"],
+                deity: "Nagas (Serpent Gods)",
+                nature: "Sharp and mysterious",
+                element: "Water",
+                characteristics: "Mysticism, intuition, kundalini power",
+                historical: "Naga Panchami is celebrated to honor the serpent deities of this Nakshatra."
+            },
+            9: { // Magha
+                meaning: "The mighty one - represents power, authority, and ancestors.",
+                significance: ["Ruled by Ketu", "Good for honoring ancestors", "Favorable for leadership"],
+                deity: "Pitris (Ancestors)",
+                nature: "Fierce and royal",
+                element: "Water",
+                characteristics: "Authority, respect for tradition, honor",
+                historical: "Mahalaya Amavasya for ancestor worship is significant when Moon is in Magha."
+            },
+            10: { // Purva Phalguni
+                meaning: "The former reddish one - symbolizes relaxation, pleasure, and creativity.",
+                significance: ["Ruled by Venus", "Good for arts and entertainment", "Favorable for relationships"],
+                deity: "Bhaga (God of Fortune)",
+                nature: "Fierce and creative",
+                element: "Water",
+                characteristics: "Creativity, pleasure, prosperity",
+                historical: "Associated with marriage and creative arts in Vedic tradition."
+            },
+            11: { // Uttara Phalguni
+                meaning: "The latter reddish one - represents generosity, patronage, and friendship.",
+                significance: ["Ruled by Sun", "Good for contracts and partnerships", "Favorable for marriage"],
+                deity: "Aryaman (God of Contracts)",
+                nature: "Fixed and supportive",
+                element: "Fire",
+                characteristics: "Generosity, leadership, reliability",
+                historical: "Considered highly auspicious for marriage ceremonies."
+            },
+            12: { // Hasta
+                meaning: "The hand - symbolizes skill, craftsmanship, and manifestation.",
+                significance: ["Ruled by Moon", "Excellent for all creative work", "Good for healing"],
+                deity: "Savitar (Sun God as Creator)",
+                nature: "Light and skillful",
+                element: "Air",
+                characteristics: "Skill, dexterity, humor",
+                historical: "Lord Rama defeated Ravana when Sun was in Hasta Nakshatra."
+            },
+            13: { // Chitra
+                meaning: "The brilliant one - represents beauty, creativity, and illusion.",
+                significance: ["Ruled by Mars", "Good for architecture and design", "Favorable for arts"],
+                deity: "Vishwakarma (Divine Architect)",
+                nature: "Soft and artistic",
+                element: "Fire",
+                characteristics: "Beauty, charisma, creativity",
+                historical: "Associated with divine architecture and the creation of celestial palaces."
+            },
+            14: { // Swati
+                meaning: "The sword - symbolizes independence, flexibility, and movement.",
+                significance: ["Ruled by Rahu", "Good for trade and commerce", "Favorable for education"],
+                deity: "Vayu (Wind God)",
+                nature: "Movable and independent",
+                element: "Air",
+                characteristics: "Independence, flexibility, business acumen",
+                historical: "Mahatma Gandhi was born under Swati Nakshatra, reflecting independence."
+            },
+            15: { // Vishakha
+                meaning: "The forked branch - represents determination, goal-orientation, and achievement.",
+                significance: ["Ruled by Jupiter", "Good for competitive activities", "Favorable for achieving goals"],
+                deity: "Indra and Agni",
+                nature: "Sharp and goal-oriented",
+                element: "Fire",
+                characteristics: "Ambition, determination, enthusiasm",
+                historical: "Represents the power to achieve goals through focused effort."
+            },
+            16: { // Anuradha
+                meaning: "Following Radha - symbolizes devotion, friendship, and success.",
+                significance: ["Ruled by Saturn", "Good for partnerships", "Favorable for devotional activities"],
+                deity: "Mitra (God of Friendship)",
+                nature: "Soft and devoted",
+                element: "Water",
+                characteristics: "Devotion, friendship, balance",
+                historical: "Associated with Lord Krishna's devotee Radha, symbolizing divine love."
+            },
+            17: { // Jyeshtha
+                meaning: "The eldest - represents authority, protection, and courage.",
+                significance: ["Ruled by Mercury", "Good for administrative work", "Associated with power"],
+                deity: "Indra (King of Gods)",
+                nature: "Sharp and protective",
+                element: "Air",
+                characteristics: "Leadership, protection, responsibility",
+                historical: "Goddess Lakshmi was born under Jyeshtha Nakshatra."
+            },
+            18: { // Moola
+                meaning: "The root - symbolizes foundations, investigation, and destruction of negativity.",
+                significance: ["Ruled by Ketu", "Good for research and roots", "Removes obstacles"],
+                deity: "Nirriti (Goddess of Destruction) and Kali",
+                nature: "Sharp and investigative",
+                element: "Air",
+                characteristics: "Investigation, eliminating negativity, foundations",
+                historical: "Associated with getting to the root of problems and destroying evil."
+            },
+            19: { // Purva Ashadha
+                meaning: "The former invincible one - represents invincibility and purification.",
+                significance: ["Ruled by Venus", "Good for purification rituals", "Favorable for victories"],
+                deity: "Apas (Water Goddess)",
+                nature: "Fierce and purifying",
+                element: "Air",
+                characteristics: "Invincibility, pride, purification",
+                historical: "Associated with gaining invincible power through spiritual practices."
+            },
+            20: { // Uttara Ashadha
+                meaning: "The latter invincible one - symbolizes final victory and ultimate truth.",
+                significance: ["Ruled by Sun", "Excellent for all auspicious activities", "Good for leadership"],
+                deity: "Vishvadevas (Universal Gods)",
+                nature: "Fixed and victorious",
+                element: "Air",
+                characteristics: "Leadership, righteousness, ultimate victory",
+                historical: "Lord Rama was born under Uttara Ashadha Nakshatra according to some traditions."
+            },
+            21: { // Shravana
+                meaning: "The ear - represents listening, learning, and knowledge.",
+                significance: ["Ruled by Moon", "Excellent for education", "Good for listening and learning"],
+                deity: "Vishnu (Preserver)",
+                nature: "Movable and receptive",
+                element: "Air",
+                characteristics: "Learning, listening, knowledge acquisition",
+                historical: "Emphasized in Vedic tradition for the importance of listening to scriptures."
+            },
+            22: { // Dhanishta
+                meaning: "The wealthiest - symbolizes prosperity, music, and rhythm.",
+                significance: ["Ruled by Mars", "Good for music and dance", "Favorable for wealth"],
+                deity: "Eight Vasus (Gods of Elements)",
+                nature: "Movable and rhythmic",
+                element: "Ether",
+                characteristics: "Wealth, music, adaptability",
+                historical: "Associated with the divine musicians and celestial music."
+            },
+            23: { // Shatabhisha
+                meaning: "The hundred physicians - represents healing, secrets, and mysticism.",
+                significance: ["Ruled by Rahu", "Good for healing and medicine", "Associated with occult sciences"],
+                deity: "Varuna (God of Cosmic Waters)",
+                nature: "Movable and mysterious",
+                element: "Ether",
+                characteristics: "Healing, mysticism, independence",
+                historical: "Known as the 'healing star' - associated with Ayurveda and medicine."
+            },
+            24: { // Purva Bhadrapada
+                meaning: "The former blessed feet - symbolizes transformation and spiritual fire.",
+                significance: ["Ruled by Jupiter", "Good for spiritual practices", "Associated with transformation"],
+                deity: "Aja Ekapada (One-footed Goat)",
+                nature: "Fierce and transformative",
+                element: "Ether",
+                characteristics: "Spiritual intensity, transformation, idealism",
+                historical: "Associated with intense spiritual practices and renunciation."
+            },
+            25: { // Uttara Bhadrapada
+                meaning: "The latter blessed feet - represents wisdom, depth, and cosmic connection.",
+                significance: ["Ruled by Saturn", "Excellent for meditation", "Good for spiritual depth"],
+                deity: "Ahir Budhnya (Serpent of the Deep)",
+                nature: "Fixed and deep",
+                element: "Ether",
+                characteristics: "Wisdom, depth, cosmic consciousness",
+                historical: "Associated with the cosmic serpent that supports the universe."
+            },
+            26: { // Revati
+                meaning: "The wealthy - symbolizes completion, nourishment, and safe journeys.",
+                significance: ["Ruled by Mercury", "Auspicious for journeys", "Good for completion of tasks"],
+                deity: "Pushan (Protector of Travelers)",
+                nature: "Soft and protective",
+                element: "Ether",
+                characteristics: "Nourishment, protection, completion",
+                historical: "Considered the final Nakshatra, representing the end of the cycle and new beginnings."
+            }
+        };
+
+        // Add similar detailed info for other elements (condensed for space)
+        const yogamInfo = {
+            0: { meaning: "Obstacle/Pain - Represents challenges that strengthen character", significance: ["Avoid starting new ventures", "Good for introspection", "Focus on completing existing tasks"] },
+            1: { meaning: "Affection/Love - Brings harmony and pleasant relationships", significance: ["Excellent for social gatherings", "Good for building relationships", "Favorable for partnerships"] },
+            2: { meaning: "Longevity - Promotes health and long life", significance: ["Auspicious for health-related activities", "Good for starting fitness regimes", "Favorable for medical treatments"] },
+            3: { meaning: "Good fortune - Brings prosperity and happiness", significance: ["Excellent for all auspicious activities", "Good for weddings", "Favorable for investments"] },
+            4: { meaning: "Splendor/Beauty - Enhances aesthetic and creative pursuits", significance: ["Great for art and creativity", "Good for beautification", "Favorable for celebrations"] },
+            5: { meaning: "Calamity - Challenging period requiring caution", significance: ["Avoid major decisions", "Practice patience", "Good for spiritual practices"] },
+            6: { meaning: "Good deeds - Encourages virtuous actions", significance: ["Excellent for charity", "Good for helping others", "Favorable for righteous work"] },
+            7: { meaning: "Steadiness - Provides stability and firmness", significance: ["Good for making important decisions", "Favorable for investments", "Excellent for commitments"] },
+            8: { meaning: "Spear/Thorn - May bring discomfort or arguments", significance: ["Avoid conflicts", "Practice diplomacy", "Good for self-defense training"] },
+            9: { meaning: "Obstacle - Similar to Vishkambha, brings challenges", significance: ["Focus on problem-solving", "Avoid starting new ventures", "Good for completing tasks"] },
+            10: { meaning: "Growth - Promotes expansion and prosperity", significance: ["Excellent for business expansion", "Good for investments", "Favorable for growth"] },
+            11: { meaning: "Fixed/Permanent - Provides lasting results", significance: ["Great for marriage", "Good for property purchase", "Favorable for long-term commitments"] },
+            12: { meaning: "Catastrophe - Requires extra caution", significance: ["Avoid risks", "Practice mindfulness", "Good for meditation"] },
+            13: { meaning: "Joy/Happiness - Brings cheerfulness", significance: ["Excellent for celebrations", "Good for social events", "Favorable for entertainment"] },
+            14: { meaning: "Diamond/Thunderbolt - Represents strength", significance: ["Good for competitive activities", "Favorable for sports", "Excellent for shows of strength"] },
+            15: { meaning: "Success/Perfection - Highly auspicious", significance: ["Excellent for all activities", "Very favorable for important work", "Perfect for achieving goals"] },
+            16: { meaning: "Great calamity - Most inauspicious", significance: ["Avoid all major activities", "Focus on spiritual practices", "Practice extreme caution"] },
+            17: { meaning: "Better/Superior - Brings improvement", significance: ["Good for self-improvement", "Favorable for learning", "Excellent for upgrades"] },
+            18: { meaning: "Obstacle/Obstruction - Creates barriers", significance: ["Handle with patience", "Avoid new beginnings", "Good for removing obstacles"] },
+            19: { meaning: "Auspicious - Blessed by Lord Shiva", significance: ["Excellent for worship", "Very favorable for all activities", "Good for spiritual growth"] },
+            20: { meaning: "Accomplished - Brings completion", significance: ["Great for finishing projects", "Good for achieving goals", "Favorable for success"] },
+            21: { meaning: "Amenable - Makes things possible", significance: ["Good for difficult tasks", "Favorable for negotiations", "Excellent for problem-solving"] },
+            22: { meaning: "Auspicious - Brings goodness", significance: ["Excellent for all activities", "Very favorable", "Good for new beginnings"] },
+            23: { meaning: "Bright/White - Represents purity", significance: ["Great for purification rituals", "Good for spiritual practices", "Favorable for clarity"] },
+            24: { meaning: "Creator - Associated with Brahma", significance: ["Excellent for creative work", "Good for starting projects", "Favorable for new ideas"] },
+            25: { meaning: "Of Indra - Brings power and authority", significance: ["Good for leadership", "Favorable for taking charge", "Excellent for administrative work"] },
+            26: { meaning: "Perverse/Contrary - Brings unusual circumstances", significance: ["Unusual results possible", "Practice caution", "Good for unconventional approaches"] }
+        };
+
+        const karanamInfo = {
+            0: { meaning: "Ruled by Sun - Brings vitality and energy", significance: ["Good for leadership activities", "Favorable for creative work", "Excellent for physical activities"] },
+            1: { meaning: "Ruled by Moon - Enhances emotions and intuition", significance: ["Good for emotional connections", "Favorable for family time", "Excellent for nurturing activities"] },
+            2: { meaning: "Ruled by Mars - Increases energy and courage", significance: ["Good for competitive activities", "Favorable for bold actions", "Excellent for physical challenges"] },
+            3: { meaning: "Ruled by Mercury - Enhances communication", significance: ["Good for communication", "Favorable for business", "Excellent for learning"] },
+            4: { meaning: "Ruled by Jupiter - Brings wisdom and growth", significance: ["Good for education", "Favorable for spiritual practices", "Excellent for expansion"] },
+            5: { meaning: "Ruled by Venus - Enhances beauty and harmony", significance: ["Good for relationships", "Favorable for arts", "Excellent for social events"] },
+            6: { meaning: "Bhadra - Inauspicious, avoid major activities", significance: ["Practice caution", "Avoid important decisions", "Good for routine work only"] },
+            7: { meaning: "Repeats - Same as first Bava", significance: ["Same significance as first Bava", "Good for leadership", "Favorable for energy work"] },
+            8: { meaning: "Repeats - Same as Balava", significance: ["Same significance as Balava", "Good for emotions", "Favorable for family"] },
+            9: { meaning: "Repeats - Same as Kaulava", significance: ["Same significance as Kaulava", "Good for courage", "Favorable for action"] },
+            10: { meaning: "Repeats - Same as Taitila", significance: ["Same significance as Taitila", "Good for communication", "Favorable for business"] }
+        };
+
+        const rashiInfo = {
+            0: { meaning: "The Ram - Fire sign, ruled by Mars. Represents leadership, courage, and initiative.", characteristics: "Bold, pioneering, energetic, impulsive", compatibility: "Best with Leo, Sagittarius", deity: "Lord Hanuman" },
+            1: { meaning: "The Bull - Earth sign, ruled by Venus. Represents stability, patience, and material comfort.", characteristics: "Practical, reliable, stubborn, sensual", compatibility: "Best with Virgo, Capricorn", deity: "Goddess Lakshmi" },
+            2: { meaning: "The Twins - Air sign, ruled by Mercury. Represents communication, versatility, and intellect.", characteristics: "Adaptable, communicative, curious, restless", compatibility: "Best with Libra, Aquarius", deity: "Lord Ganesha" },
+            3: { meaning: "The Crab - Water sign, ruled by Moon. Represents emotions, nurturing, and intuition.", characteristics: "Emotional, caring, protective, moody", compatibility: "Best with Scorpio, Pisces", deity: "Goddess Parvati" },
+            4: { meaning: "The Lion - Fire sign, ruled by Sun. Represents authority, confidence, and creativity.", characteristics: "Confident, generous, dramatic, proud", compatibility: "Best with Aries, Sagittarius", deity: "Lord Narasimha" },
+            5: { meaning: "The Virgin - Earth sign, ruled by Mercury. Represents perfectionism, analysis, and service.", characteristics: "Analytical, practical, modest, critical", compatibility: "Best with Taurus, Capricorn", deity: "Goddess Durga" },
+            6: { meaning: "The Scales - Air sign, ruled by Venus. Represents balance, harmony, and relationships.", characteristics: "Diplomatic, charming, indecisive, fair", compatibility: "Best with Gemini, Aquarius", deity: "Lord Vishnu" },
+            7: { meaning: "The Scorpion - Water sign, ruled by Mars. Represents intensity, transformation, and mystery.", characteristics: "Intense, passionate, secretive, powerful", compatibility: "Best with Cancer, Pisces", deity: "Lord Shiva" },
+            8: { meaning: "The Archer - Fire sign, ruled by Jupiter. Represents wisdom, adventure, and philosophy.", characteristics: "Optimistic, adventurous, philosophical, restless", compatibility: "Best with Aries, Leo", deity: "Lord Ayyappa" },
+            9: { meaning: "The Goat - Earth sign, ruled by Saturn. Represents discipline, ambition, and responsibility.", characteristics: "Ambitious, disciplined, practical, pessimistic", compatibility: "Best with Taurus, Virgo", deity: "Lord Hanuman" },
+            10: { meaning: "The Water-bearer - Air sign, ruled by Saturn. Represents innovation, humanitarianism, and independence.", characteristics: "Innovative, humanitarian, detached, rebellious", compatibility: "Best with Gemini, Libra", deity: "Lord Shiva" },
+            11: { meaning: "The Fish - Water sign, ruled by Jupiter. Represents spirituality, compassion, and intuition.", characteristics: "Compassionate, intuitive, artistic, escapist", compatibility: "Best with Cancer, Scorpio", deity: "Lord Vishnu" }
+        };
+
+        // Calculate Telugu calendar details based on date
+        function calculatePanchang(date) {
+            const dayOfYear = getDayOfYear(date);
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const day = date.getDate();
+            const weekday = date.getDay();
+            
+            // Telugu year calculation (approximate)
+            const teluguYear = year + 3100; // Approximate Kali year
+            
+            // Determine paksha and thithi
+            const moonPhase = (dayOfYear * 12.368) % 30; // Approximate lunar day
+            const thithiIndex = Math.floor(moonPhase);
+            const paksha = moonPhase < 15 ? 'శుక్ల పక్షం' : 'కృష్ణ పక్షం';
+            const pakshaEng = moonPhase < 15 ? 'Shukla Paksha (Waxing)' : 'Krishna Paksha (Waning)';
+            
+            // Get thithi
+            let adjustedThithiIndex = Math.floor(moonPhase) % 15;
+            if (adjustedThithiIndex === 14 && moonPhase >= 14.5 && moonPhase < 15) {
+                adjustedThithiIndex = 14; // Pournami
+            } else if (adjustedThithiIndex === 14 && moonPhase >= 29.5) {
+                adjustedThithiIndex = 15; // Amavasya
+            }
+            const thithi = thidhiNames[adjustedThithiIndex];
+            const thithiTiming = calculateTiming(moonPhase, 'thithi');
+            
+            // Calculate next thithi if current ends today
+            let nextThithi = null;
+            if (thithiTiming.endsToday) {
+                const nextThithiIndex = (adjustedThithiIndex + 1) % 16;
+                nextThithi = {
+                    ...thidhiNames[nextThithiIndex],
+                    startTime: thithiTiming.end,
+                    index: nextThithiIndex
+                };
+            }
+            
+            // Calculate Nakshatra (27 divisions)
+            const nakshatraValue = (dayOfYear * 13.176) % 27;
+            const nakshatraIndex = Math.floor(nakshatraValue);
+            const nakshatra = nakshatraNames[nakshatraIndex];
+            const nakshatraTiming = calculateTiming(nakshatraValue, 'nakshatra');
+            
+            // Calculate next nakshatra if current ends today
+            let nextNakshatra = null;
+            if (nakshatraTiming.endsToday) {
+                const nextNakshatraIndex = (nakshatraIndex + 1) % 27;
+                nextNakshatra = {
+                    ...nakshatraNames[nextNakshatraIndex],
+                    startTime: nakshatraTiming.end,
+                    index: nextNakshatraIndex
+                };
+            }
+            
+            // Calculate Yogam
+            const yogamValue = (dayOfYear * 7.89) % 27;
+            const yogamIndex = Math.floor(yogamValue);
+            const yogam = yogamNames[yogamIndex];
+            const yogamTiming = calculateTiming(yogamValue, 'yogam');
+            
+            // Calculate next yogam if current ends today
+            let nextYogam = null;
+            if (yogamTiming.endsToday) {
+                const nextYogamIndex = (yogamIndex + 1) % 27;
+                nextYogam = {
+                    ...yogamNames[nextYogamIndex],
+                    startTime: yogamTiming.end,
+                    index: nextYogamIndex
+                };
+            }
+            
+            // Calculate Karanam (11 divisions, repeated)
+            const karanamValue = (dayOfYear * 5.5) % 11;
+            const karanamIndex = Math.floor(karanamValue);
+            const karanam = karanamNames[karanamIndex];
+            const karanamTiming = calculateTiming(karanamValue, 'karanam');
+            
+            // Calculate next karanam if current ends today
+            let nextKaranam = null;
+            if (karanamTiming.endsToday) {
+                const nextKaranamIndex = (karanamIndex + 1) % 11;
+                nextKaranam = {
+                    ...karanamNames[nextKaranamIndex],
+                    startTime: karanamTiming.end,
+                    index: nextKaranamIndex
+                };
+            }
+            
+            // Calculate Rashi (zodiac sign based on month)
+            const rashiIndex = Math.floor((month + 9) % 12);
+            const rashi = rashiNames[rashiIndex];
+            
+            // Determine Telugu month
+            const teluguMonthIndex = (month + 10) % 12; // Approximate mapping
+            const teluguMonth = teluguMonths[teluguMonthIndex];
+            
+            // Sunrise and Sunset (approximate)
+            const sunrise = "06:15 AM";
+            const sunset = "06:30 PM";
+            
+            // Weekday
+            const weekdayTelugu = weekdaysTelugu[weekday];
+            const weekdayEnglish = weekdaysEnglish[weekday];
+            
+            return {
+                teluguYear,
+                teluguMonth,
+                paksha,
+                pakshaEng,
+                thithi,
+                thithiTiming,
+                nextThithi,
+                nakshatra,
+                nakshatraTiming,
+                nextNakshatra,
+                yogam,
+                yogamTiming,
+                nextYogam,
+                karanam,
+                karanamTiming,
+                nextKaranam,
+                rashi,
+                sunrise,
+                sunset,
+                weekdayTelugu,
+                weekdayEnglish
+            };
+        }
+
+        function getDayOfYear(date) {
+            const start = new Date(date.getFullYear(), 0, 0);
+            const diff = date - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            return Math.floor(diff / oneDay);
+        }
+
+        // Calculate timing for panchang elements
+        function calculateTiming(baseValue, elementType) {
+            // Calculate when the element starts and ends during the day
+            const fractionalPart = baseValue % 1;
+            
+            let startHour, startMin, endHour, endMin;
+            let endsToday = false;
+            
+            if (elementType === 'thithi') {
+                // Thithi can span across days, calculate when current thithi ends
+                const remainingFraction = 1 - fractionalPart;
+                const durationHours = remainingFraction * 24;
+                
+                startHour = 6; // Starts from sunrise (approx)
+                startMin = 15;
+                
+                endHour = Math.floor(startHour + durationHours);
+                endMin = Math.floor((durationHours % 1) * 60);
+                
+                if (endHour < 24) {
+                    endsToday = true;
+                } else {
+                    endHour -= 24;
+                }
+            } else if (elementType === 'nakshatra') {
+                // Nakshatra timing
+                const nakshatraDuration = 13.33; // Average hours per nakshatra
+                const elapsedHours = fractionalPart * nakshatraDuration;
+                
+                startHour = 6;
+                startMin = 15;
+                
+                endHour = Math.floor(startHour + nakshatraDuration - elapsedHours);
+                endMin = Math.floor(((nakshatraDuration - elapsedHours) % 1) * 60);
+                
+                if (endHour < 24) {
+                    endsToday = true;
+                } else {
+                    endHour -= 24;
+                }
+            } else if (elementType === 'yogam') {
+                // Yogam timing - changes less frequently
+                const yogamDuration = 18; // Approximate hours
+                const elapsedHours = fractionalPart * yogamDuration;
+                
+                startHour = Math.floor(6 + (fractionalPart * 8));
+                startMin = Math.floor((fractionalPart * 8 % 1) * 60);
+                
+                endHour = Math.floor(startHour + yogamDuration - elapsedHours);
+                endMin = Math.floor(((yogamDuration - elapsedHours) % 1) * 60);
+                
+                if (endHour < 24) {
+                    endsToday = true;
+                } else {
+                    endHour -= 24;
+                }
+            } else if (elementType === 'karanam') {
+                // Karanam - half of thithi
+                const karanamDuration = 6; // Approximate hours
+                const elapsedHours = fractionalPart * karanamDuration;
+                
+                startHour = Math.floor(6 + (fractionalPart * 12));
+                startMin = Math.floor((fractionalPart * 12 % 1) * 60);
+                
+                endHour = Math.floor(startHour + karanamDuration - elapsedHours);
+                endMin = Math.floor(((karanamDuration - elapsedHours) % 1) * 60);
+                
+                if (endHour < 24) {
+                    endsToday = true;
+                }
+            } else {
+                // Default timing (all day)
+                return {
+                    start: '06:15 AM',
+                    end: '06:30 PM',
+                    endsToday: false,
+                    ongoing: true
+                };
+            }
+            
+            return {
+                start: formatTime(startHour, startMin),
+                end: formatTime(endHour, endMin),
+                endsToday: endsToday,
+                ongoing: true
+            };
+        }
+
+        function formatTime(hour, minute) {
+            let period = 'AM';
+            let displayHour = hour;
+            
+            if (hour >= 12) {
+                period = 'PM';
+                if (hour > 12) displayHour = hour - 12;
+            }
+            if (hour === 0) displayHour = 12;
+            
+            const displayMinute = minute.toString().padStart(2, '0');
+            return `${displayHour}:${displayMinute} ${period}`;
+        }
+
+        function displayPanchang(date) {
+            const panchang = calculatePanchang(date);
+            
+            // Update date displays
+            const englishDateStr = `${weekdaysEnglish[date.getDay()]}, ${englishMonths[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+            const teluguDateStr = `${panchang.weekdayTelugu}, ${panchang.teluguMonth} ${panchang.teluguYear}`;
+            
+            document.getElementById('englishDate').textContent = englishDateStr;
+            document.getElementById('teluguDate').textContent = teluguDateStr;
+            
+            // Helper function to generate next element HTML
+            const getNextElementHTML = (nextElement, type) => {
+                if (!nextElement) return '';
+                return `
+                    <div class="next-element">
+                        <div class="next-label">⏭️ Next ${type}</div>
+                        <div class="next-value">${nextElement.english}</div>
+                        <div class="next-telugu">${nextElement.telugu}</div>
+                        <div class="next-timing">🕐 Starts at: ${nextElement.startTime}</div>
+                    </div>
+                `;
+            };
+            
+            // Create panchang items with click handlers
+            const panchangData = document.getElementById('panchangData');
+            panchangData.innerHTML = `
+                <div class="panchang-item">
+                    <div class="label">Paksha / పక్షం</div>
+                    <div class="value">${panchang.pakshaEng}</div>
+                    <div class="telugu">${panchang.paksha}</div>
+                </div>
+                
+                <div class="panchang-item" onclick='showInfo("thithi", ${Math.floor((getDayOfYear(date) * 12.368) % 30) % 15})'>
+                    <div class="label">Thithi / తిథి <span class="info-icon">ℹ️</span></div>
+                    <div class="value">${panchang.thithi.english}</div>
+                    <div class="telugu">${panchang.thithi.telugu}</div>
+                    <div class="timing">⏰ Until: ${panchang.thithiTiming.end}${panchang.thithiTiming.endsToday ? '' : ' (Next day)'}</div>
+                    <div class="timing-range">Available from: ${panchang.thithiTiming.start}</div>
+                    ${getNextElementHTML(panchang.nextThithi, 'Thithi')}
+                </div>
+                
+                <div class="panchang-item" onclick='showInfo("nakshatra", ${Math.floor((getDayOfYear(date) * 13.176) % 27)})'>
+                    <div class="label">Nakshatra / నక్షత్రం <span class="info-icon">ℹ️</span></div>
+                    <div class="value">${panchang.nakshatra.english}</div>
+                    <div class="telugu">${panchang.nakshatra.telugu}</div>
+                    <div class="timing">⏰ Until: ${panchang.nakshatraTiming.end}${panchang.nakshatraTiming.endsToday ? '' : ' (Next day)'}</div>
+                    <div class="timing-range">Available from: ${panchang.nakshatraTiming.start}</div>
+                    ${getNextElementHTML(panchang.nextNakshatra, 'Nakshatra')}
+                </div>
+                
+                <div class="panchang-item" onclick='showInfo("yogam", ${Math.floor((getDayOfYear(date) * 7.89) % 27)})'>
+                    <div class="label">Yogam / యోగం <span class="info-icon">ℹ️</span></div>
+                    <div class="value">${panchang.yogam.english}</div>
+                    <div class="telugu">${panchang.yogam.telugu}</div>
+                    <div class="timing">⏰ Until: ${panchang.yogamTiming.end}${panchang.yogamTiming.endsToday ? '' : ' (Next day)'}</div>
+                    <div class="timing-range">Available from: ${panchang.yogamTiming.start}</div>
+                    ${getNextElementHTML(panchang.nextYogam, 'Yogam')}
+                </div>
+                
+                <div class="panchang-item" onclick='showInfo("karanam", ${Math.floor((getDayOfYear(date) * 5.5) % 11)})'>
+                    <div class="label">Karanam / కరణం <span class="info-icon">ℹ️</span></div>
+                    <div class="value">${panchang.karanam.english}</div>
+                    <div class="telugu">${panchang.karanam.telugu}</div>
+                    <div class="timing">⏰ Until: ${panchang.karanamTiming.end}${panchang.karanamTiming.endsToday ? '' : ' (Next day)'}</div>
+                    <div class="timing-range">Available from: ${panchang.karanamTiming.start}</div>
+                    ${getNextElementHTML(panchang.nextKaranam, 'Karanam')}
+                </div>
+                
+                <div class="panchang-item" onclick='showInfo("rashi", ${Math.floor((date.getMonth() + 9) % 12)})'>
+                    <div class="label">Rashi / రాశి <span class="info-icon">ℹ️</span></div>
+                    <div class="value">${panchang.rashi.english}</div>
+                    <div class="telugu">${panchang.rashi.telugu}</div>
+                    <div class="timing-range">All day</div>
+                </div>
+                
+                <div class="panchang-item">
+                    <div class="label">Sunrise / సూర్యోదయం</div>
+                    <div class="value">${panchang.sunrise}</div>
+                </div>
+                
+                <div class="panchang-item">
+                    <div class="label">Sunset / సూర్యాస్తమయం</div>
+                    <div class="value">${panchang.sunset}</div>
+                </div>
+            `;
+        }
+
+        // Show detailed information modal
+        function showInfo(type, index) {
+            const modal = document.getElementById('infoModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalTeluguTitle = document.getElementById('modalTeluguTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            let info, title, teluguTitle;
+            
+            switch(type) {
+                case 'thithi':
+                    info = thithiInfo[index];
+                    title = thidhiNames[index].english;
+                    teluguTitle = thidhiNames[index].telugu;
+                    break;
+                case 'nakshatra':
+                    info = nakshatraInfo[index];
+                    title = nakshatraNames[index].english;
+                    teluguTitle = nakshatraNames[index].telugu;
+                    break;
+                case 'yogam':
+                    info = yogamInfo[index];
+                    title = yogamNames[index].english;
+                    teluguTitle = yogamNames[index].telugu;
+                    break;
+                case 'karanam':
+                    info = karanamInfo[index];
+                    title = karanamNames[index].english;
+                    teluguTitle = karanamNames[index].telugu;
+                    break;
+                case 'rashi':
+                    info = rashiInfo[index];
+                    title = rashiNames[index].english;
+                    teluguTitle = rashiNames[index].telugu;
+                    break;
+            }
+            
+            modalTitle.textContent = title;
+            modalTeluguTitle.textContent = teluguTitle;
+            
+            // Build modal content based on type
+            let content = '';
+            
+            if (type === 'thithi' || type === 'nakshatra') {
+                content = `
+                    <div class="modal-section">
+                        <h3>📖 Meaning</h3>
+                        <p>${info.meaning}</p>
+                    </div>
+                    
+                    <div class="modal-section">
+                        <h3>✨ Significance</h3>
+                        <ul>
+                            ${info.significance.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="modal-section">
+                        <h3>🕉️ Deity</h3>
+                        <p>${info.deity}</p>
+                    </div>
+                    
+                    ${info.activities ? `
+                    <div class="modal-section">
+                        <h3>🎯 Recommended Activities</h3>
+                        <p>${info.activities}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${info.nature ? `
+                    <div class="modal-section">
+                        <h3>🌟 Nature</h3>
+                        <p>${info.nature}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${info.element ? `
+                    <div class="modal-section">
+                        <h3>🌍 Element</h3>
+                        <p>${info.element}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${info.characteristics ? `
+                    <div class="modal-section">
+                        <h3>💫 Characteristics</h3>
+                        <p>${info.characteristics}</p>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="modal-section">
+                        <h3>📜 Historical Significance</h3>
+                        <p>${info.historical}</p>
+                    </div>
+                `;
+            } else if (type === 'rashi') {
+                content = `
+                    <div class="modal-section">
+                        <h3>📖 Meaning</h3>
+                        <p>${info.meaning}</p>
+                    </div>
+                    
+                    <div class="modal-section">
+                        <h3>💫 Characteristics</h3>
+                        <p>${info.characteristics}</p>
+                    </div>
+                    
+                    <div class="modal-section">
+                        <h3>💕 Compatibility</h3>
+                        <p>${info.compatibility}</p>
+                    </div>
+                    
+                    <div class="modal-section">
+                        <h3>🕉️ Associated Deity</h3>
+                        <p>${info.deity}</p>
+                    </div>
+                `;
+            } else {
+                // For Yogam and Karanam
+                content = `
+                    <div class="modal-section">
+                        <h3>📖 Meaning</h3>
+                        <p>${info.meaning}</p>
+                    </div>
+                    
+                    <div class="modal-section">
+                        <h3>✨ Significance</h3>
+                        <ul>
+                            ${info.significance.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            modalBody.innerHTML = content;
+            modal.classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('infoModal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('infoModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Initialize on page load
+        function init() {
+            const today = new Date();
+            const dateInput = document.getElementById('dateInput');
+            
+            // Set today's date as default
+            dateInput.valueAsDate = today;
+            
+            // Display panchang for today
+            displayPanchang(today);
+            
+            // Add event listener for date changes
+            dateInput.addEventListener('change', (e) => {
+                const selectedDate = new Date(e.target.value + 'T00:00:00');
+                displayPanchang(selectedDate);
+            });
+        }
+
+        // Run on page load
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
