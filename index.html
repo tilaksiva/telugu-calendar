@@ -932,37 +932,94 @@
             11: { meaning: "The Fish - Water sign, ruled by Jupiter. Represents spirituality, compassion, and intuition.", characteristics: "Compassionate, intuitive, artistic, escapist", compatibility: "Best with Cancer, Scorpio", deity: "Lord Vishnu" }
         };
 
+        // Improved lunar calculations using proper astronomical formulas
+        function getMoonPhase(date) {
+            // Julian Day calculation
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            
+            let a = Math.floor((14 - month) / 12);
+            let y = year + 4800 - a;
+            let m = month + 12 * a - 3;
+            
+            let jd = day + Math.floor((153 * m + 2) / 5) + 365 * y + 
+                     Math.floor(y / 4) - Math.floor(y / 100) + 
+                     Math.floor(y / 400) - 32045;
+            
+            // Days since known new moon (Jan 6, 2000)
+            const daysSinceNew = jd - 2451550.1;
+            const newMoons = daysSinceNew / 29.53058867; // Synodic month
+            const phase = (newMoons % 1) * 29.53058867;
+            
+            return phase;
+        }
+
+        function getSunLongitude(date) {
+            // Simplified sun longitude calculation
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            
+            const N = Math.floor((275 * month) / 9) - Math.floor((month + 9) / 12) * 
+                     (1 + Math.floor((year - 4 * Math.floor(year / 4) + 2) / 3)) + day - 30;
+            
+            const longitude = (N * 360 / 365.25 + 280) % 360;
+            return longitude;
+        }
+
+        function getMoonLongitude(date) {
+            const phase = getMoonPhase(date);
+            const sunLong = getSunLongitude(date);
+            const moonLong = (sunLong + phase * 12.2) % 360;
+            return moonLong;
+        }
+
         // Calculate Telugu calendar details based on date
         function calculatePanchang(date) {
-            const dayOfYear = getDayOfYear(date);
             const year = date.getFullYear();
             const month = date.getMonth();
             const day = date.getDate();
             const weekday = date.getDay();
             
-            // Telugu year calculation (approximate)
-            const teluguYear = year + 3100; // Approximate Kali year
+            // Telugu year calculation (Kali Yuga year)
+            const teluguYear = year + 3101;
+            
+            // Get moon phase for Thithi calculation
+            const moonPhase = getMoonPhase(date);
+            const thithiNumber = Math.floor(moonPhase);
             
             // Determine paksha and thithi
-            const moonPhase = (dayOfYear * 12.368) % 30; // Approximate lunar day
-            const thithiIndex = Math.floor(moonPhase);
-            const paksha = moonPhase < 15 ? 'శుక్ల పక్షం' : 'కృష్ణ పక్షం';
-            const pakshaEng = moonPhase < 15 ? 'Shukla Paksha (Waxing)' : 'Krishna Paksha (Waning)';
+            let paksha, pakshaEng, adjustedThithiIndex;
             
-            // Get thithi
-            let adjustedThithiIndex = Math.floor(moonPhase) % 15;
-            if (adjustedThithiIndex === 14 && moonPhase >= 14.5 && moonPhase < 15) {
+            if (thithiNumber < 15) {
+                paksha = 'శుక్ల పక్షం';
+                pakshaEng = 'Shukla Paksha (Waxing)';
+                adjustedThithiIndex = thithiNumber;
+            } else if (thithiNumber === 15) {
+                paksha = 'శుక్ల పక్షం';
+                pakshaEng = 'Shukla Paksha (Waxing)';
                 adjustedThithiIndex = 14; // Pournami
-            } else if (adjustedThithiIndex === 14 && moonPhase >= 29.5) {
+            } else if (thithiNumber < 30) {
+                paksha = 'కృష్ణ పక్షం';
+                pakshaEng = 'Krishna Paksha (Waning)';
+                adjustedThithiIndex = thithiNumber - 15;
+            } else {
+                paksha = 'కృష్ణ పక్షం';
+                pakshaEng = 'Krishna Paksha (Waning)';
                 adjustedThithiIndex = 15; // Amavasya
             }
+            
             const thithi = thidhiNames[adjustedThithiIndex];
             const thithiTiming = calculateTiming(moonPhase, 'thithi');
             
             // Calculate next thithi if current ends today
             let nextThithi = null;
             if (thithiTiming.endsToday) {
-                const nextThithiIndex = (adjustedThithiIndex + 1) % 16;
+                let nextThithiIndex = (adjustedThithiIndex + 1) % 16;
+                if (nextThithiIndex === 15 && moonPhase < 15) {
+                    nextThithiIndex = 14; // Pournami
+                }
                 nextThithi = {
                     ...thidhiNames[nextThithiIndex],
                     startTime: thithiTiming.end,
@@ -970,9 +1027,10 @@
                 };
             }
             
-            // Calculate Nakshatra (27 divisions)
-            const nakshatraValue = (dayOfYear * 13.176) % 27;
-            const nakshatraIndex = Math.floor(nakshatraValue);
+            // Calculate Nakshatra based on moon longitude
+            const moonLong = getMoonLongitude(date);
+            const nakshatraIndex = Math.floor(moonLong / 13.333333) % 27;
+            const nakshatraValue = moonLong / 13.333333;
             const nakshatra = nakshatraNames[nakshatraIndex];
             const nakshatraTiming = calculateTiming(nakshatraValue, 'nakshatra');
             
@@ -987,8 +1045,9 @@
                 };
             }
             
-            // Calculate Yogam
-            const yogamValue = (dayOfYear * 7.89) % 27;
+            // Calculate Yogam (Sun longitude + Moon longitude) / 13.333333
+            const sunLong = getSunLongitude(date);
+            const yogamValue = ((sunLong + moonLong) / 13.333333) % 27;
             const yogamIndex = Math.floor(yogamValue);
             const yogam = yogamNames[yogamIndex];
             const yogamTiming = calculateTiming(yogamValue, 'yogam');
@@ -1004,8 +1063,8 @@
                 };
             }
             
-            // Calculate Karanam (11 divisions, repeated)
-            const karanamValue = (dayOfYear * 5.5) % 11;
+            // Calculate Karanam (half of Thithi)
+            const karanamValue = (moonPhase * 2) % 11;
             const karanamIndex = Math.floor(karanamValue);
             const karanam = karanamNames[karanamIndex];
             const karanamTiming = calculateTiming(karanamValue, 'karanam');
@@ -1021,17 +1080,22 @@
                 };
             }
             
-            // Calculate Rashi (zodiac sign based on month)
-            const rashiIndex = Math.floor((month + 9) % 12);
+            // Calculate Rashi based on sun longitude
+            const rashiIndex = Math.floor(sunLong / 30) % 12;
             const rashi = rashiNames[rashiIndex];
             
-            // Determine Telugu month
-            const teluguMonthIndex = (month + 10) % 12; // Approximate mapping
-            const teluguMonth = teluguMonths[teluguMonthIndex];
+            // Determine Telugu month based on sun's position
+            const teluguMonthMapping = [9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8]; // Chaitra starts around March
+            const solarMonth = Math.floor((sunLong + 270) / 30) % 12;
+            const teluguMonth = teluguMonths[teluguMonthMapping[solarMonth]];
             
-            // Sunrise and Sunset (approximate)
-            const sunrise = "06:15 AM";
-            const sunset = "06:30 PM";
+            // Calculate sunrise and sunset based on location (Hyderabad approximation)
+            const dayOfYear = getDayOfYear(date);
+            const sunriseMins = 375 + Math.sin((dayOfYear - 80) * 2 * Math.PI / 365) * 30;
+            const sunsetMins = 1110 + Math.sin((dayOfYear - 80) * 2 * Math.PI / 365) * 30;
+            
+            const sunrise = formatTime(Math.floor(sunriseMins / 60), Math.floor(sunriseMins % 60));
+            const sunset = formatTime(Math.floor(sunsetMins / 60), Math.floor(sunsetMins % 60));
             
             // Weekday
             const weekdayTelugu = weekdaysTelugu[weekday];
@@ -1078,15 +1142,19 @@
             let endsToday = false;
             
             if (elementType === 'thithi') {
-                // Thithi can span across days, calculate when current thithi ends
-                const remainingFraction = 1 - fractionalPart;
-                const durationHours = remainingFraction * 24;
+                // Thithi duration varies but averages ~23.6 hours
+                const thithiDuration = 23.62; // Average hours
+                const elapsedHours = fractionalPart * thithiDuration;
+                const remainingHours = thithiDuration - elapsedHours;
                 
-                startHour = 6; // Starts from sunrise (approx)
-                startMin = 15;
+                // Assume current thithi started at sunrise
+                startHour = 6;
+                startMin = Math.floor((0.25 + fractionalPart * 0.5) * 60) % 60;
                 
-                endHour = Math.floor(startHour + durationHours);
-                endMin = Math.floor((durationHours % 1) * 60);
+                // Calculate end time
+                const totalMins = (startHour * 60 + startMin) + (remainingHours * 60);
+                endHour = Math.floor(totalMins / 60);
+                endMin = Math.floor(totalMins % 60);
                 
                 if (endHour < 24) {
                     endsToday = true;
@@ -1094,15 +1162,17 @@
                     endHour -= 24;
                 }
             } else if (elementType === 'nakshatra') {
-                // Nakshatra timing
-                const nakshatraDuration = 13.33; // Average hours per nakshatra
+                // Nakshatra duration averages ~23.2 hours
+                const nakshatraDuration = 23.2;
                 const elapsedHours = fractionalPart * nakshatraDuration;
+                const remainingHours = nakshatraDuration - elapsedHours;
                 
                 startHour = 6;
-                startMin = 15;
+                startMin = Math.floor((0.25 + fractionalPart * 0.8) * 60) % 60;
                 
-                endHour = Math.floor(startHour + nakshatraDuration - elapsedHours);
-                endMin = Math.floor(((nakshatraDuration - elapsedHours) % 1) * 60);
+                const totalMins = (startHour * 60 + startMin) + (remainingHours * 60);
+                endHour = Math.floor(totalMins / 60);
+                endMin = Math.floor(totalMins % 60);
                 
                 if (endHour < 24) {
                     endsToday = true;
@@ -1110,15 +1180,17 @@
                     endHour -= 24;
                 }
             } else if (elementType === 'yogam') {
-                // Yogam timing - changes less frequently
-                const yogamDuration = 18; // Approximate hours
+                // Yogam duration averages ~23 hours
+                const yogamDuration = 23.0;
                 const elapsedHours = fractionalPart * yogamDuration;
+                const remainingHours = yogamDuration - elapsedHours;
                 
-                startHour = Math.floor(6 + (fractionalPart * 8));
-                startMin = Math.floor((fractionalPart * 8 % 1) * 60);
+                startHour = 6;
+                startMin = Math.floor((0.25 + fractionalPart * 0.6) * 60) % 60;
                 
-                endHour = Math.floor(startHour + yogamDuration - elapsedHours);
-                endMin = Math.floor(((yogamDuration - elapsedHours) % 1) * 60);
+                const totalMins = (startHour * 60 + startMin) + (remainingHours * 60);
+                endHour = Math.floor(totalMins / 60);
+                endMin = Math.floor(totalMins % 60);
                 
                 if (endHour < 24) {
                     endsToday = true;
@@ -1126,15 +1198,17 @@
                     endHour -= 24;
                 }
             } else if (elementType === 'karanam') {
-                // Karanam - half of thithi
-                const karanamDuration = 6; // Approximate hours
+                // Karanam is half of thithi, ~11.8 hours
+                const karanamDuration = 11.81;
                 const elapsedHours = fractionalPart * karanamDuration;
+                const remainingHours = karanamDuration - elapsedHours;
                 
-                startHour = Math.floor(6 + (fractionalPart * 12));
-                startMin = Math.floor((fractionalPart * 12 % 1) * 60);
+                startHour = 6;
+                startMin = Math.floor((0.25 + fractionalPart * 1.2) * 60) % 60;
                 
-                endHour = Math.floor(startHour + karanamDuration - elapsedHours);
-                endMin = Math.floor(((karanamDuration - elapsedHours) % 1) * 60);
+                const totalMins = (startHour * 60 + startMin) + (remainingHours * 60);
+                endHour = Math.floor(totalMins / 60);
+                endMin = Math.floor(totalMins % 60);
                 
                 if (endHour < 24) {
                     endsToday = true;
@@ -1194,6 +1268,22 @@
                 `;
             };
             
+            // Get indices for modal click handlers
+            const moonPhase = getMoonPhase(date);
+            const thithiNumber = Math.floor(moonPhase);
+            let thithiIndex = thithiNumber < 15 ? thithiNumber : (thithiNumber === 15 ? 14 : thithiNumber - 15);
+            if (thithiNumber >= 30) thithiIndex = 15;
+            
+            const moonLong = getMoonLongitude(date);
+            const nakshatraIndex = Math.floor(moonLong / 13.333333) % 27;
+            
+            const sunLong = getSunLongitude(date);
+            const yogamIndex = Math.floor(((sunLong + moonLong) / 13.333333) % 27);
+            
+            const karanamIndex = Math.floor((moonPhase * 2) % 11);
+            
+            const rashiIndex = Math.floor(sunLong / 30) % 12;
+            
             // Create panchang items with click handlers
             const panchangData = document.getElementById('panchangData');
             panchangData.innerHTML = `
@@ -1203,7 +1293,7 @@
                     <div class="telugu">${panchang.paksha}</div>
                 </div>
                 
-                <div class="panchang-item" onclick='showInfo("thithi", ${Math.floor((getDayOfYear(date) * 12.368) % 30) % 15})'>
+                <div class="panchang-item" onclick='showInfo("thithi", ${thithiIndex})'>
                     <div class="label">Thithi / తిథి <span class="info-icon">ℹ️</span></div>
                     <div class="value">${panchang.thithi.english}</div>
                     <div class="telugu">${panchang.thithi.telugu}</div>
@@ -1212,7 +1302,7 @@
                     ${getNextElementHTML(panchang.nextThithi, 'Thithi')}
                 </div>
                 
-                <div class="panchang-item" onclick='showInfo("nakshatra", ${Math.floor((getDayOfYear(date) * 13.176) % 27)})'>
+                <div class="panchang-item" onclick='showInfo("nakshatra", ${nakshatraIndex})'>
                     <div class="label">Nakshatra / నక్షత్రం <span class="info-icon">ℹ️</span></div>
                     <div class="value">${panchang.nakshatra.english}</div>
                     <div class="telugu">${panchang.nakshatra.telugu}</div>
@@ -1221,7 +1311,7 @@
                     ${getNextElementHTML(panchang.nextNakshatra, 'Nakshatra')}
                 </div>
                 
-                <div class="panchang-item" onclick='showInfo("yogam", ${Math.floor((getDayOfYear(date) * 7.89) % 27)})'>
+                <div class="panchang-item" onclick='showInfo("yogam", ${yogamIndex})'>
                     <div class="label">Yogam / యోగం <span class="info-icon">ℹ️</span></div>
                     <div class="value">${panchang.yogam.english}</div>
                     <div class="telugu">${panchang.yogam.telugu}</div>
@@ -1230,7 +1320,7 @@
                     ${getNextElementHTML(panchang.nextYogam, 'Yogam')}
                 </div>
                 
-                <div class="panchang-item" onclick='showInfo("karanam", ${Math.floor((getDayOfYear(date) * 5.5) % 11)})'>
+                <div class="panchang-item" onclick='showInfo("karanam", ${karanamIndex})'>
                     <div class="label">Karanam / కరణం <span class="info-icon">ℹ️</span></div>
                     <div class="value">${panchang.karanam.english}</div>
                     <div class="telugu">${panchang.karanam.telugu}</div>
@@ -1239,7 +1329,7 @@
                     ${getNextElementHTML(panchang.nextKaranam, 'Karanam')}
                 </div>
                 
-                <div class="panchang-item" onclick='showInfo("rashi", ${Math.floor((date.getMonth() + 9) % 12)})'>
+                <div class="panchang-item" onclick='showInfo("rashi", ${rashiIndex})'>
                     <div class="label">Rashi / రాశి <span class="info-icon">ℹ️</span></div>
                     <div class="value">${panchang.rashi.english}</div>
                     <div class="telugu">${panchang.rashi.telugu}</div>
